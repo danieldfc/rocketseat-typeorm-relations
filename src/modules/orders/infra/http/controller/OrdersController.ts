@@ -13,6 +13,8 @@ export default class OrdersController {
 
     const order = await findOrderService.execute({ id });
 
+    console.log(order);
+
     return response.json(order);
   }
 

@@ -6,7 +6,6 @@ import IProductsRepository from '@modules/products/repositories/IProductsReposit
 import ICustomersRepository from '@modules/customers/repositories/ICustomersRepository';
 import Order from '../infra/typeorm/entities/Order';
 import IOrdersRepository from '../repositories/IOrdersRepository';
-import Product from '@modules/products/infra/typeorm/entities/Product';
 
 interface IProduct {
   id: string;
@@ -36,32 +35,37 @@ class CreateOrderService {
       throw new AppError('Customer not found');
     }
 
-    let productsIds = products.map(product => ({
+    const productsIds = products.map(product => ({
       id: product.id,
     }));
 
-    const checkProducts = await this.productsRepository.findAllById(productsIds);
+    const checkProducts = await this.productsRepository.findAllById(
+      productsIds,
+    );
 
     if (checkProducts.length !== products.length) {
       throw new AppError('Product(s) not found');
     }
 
     let searchProduct: any;
+    let searchProductQuantity: number;
 
     products.forEach(product => {
-      searchProduct = checkProducts
-        .find(search => search.id === product.id);
+      searchProductQuantity =
+        checkProducts.find(search => search.id === product.id)?.quantity || 0;
+      searchProduct = checkProducts.find(search => search.id === product.id);
 
-      if (searchProduct && searchProduct.quantity < product.quantity) {
+      if (searchProductQuantity < product.quantity) {
         throw new AppError('Exceded limit quantity.');
       }
     });
 
     const formattedProducts = products.map(product => ({
+      ...product,
       product_id: product.id,
       price: searchProduct.price || 0,
       quantity: product.quantity,
-    }))
+    }));
 
     const order = await this.ordersRepository.create({
       customer: checkCustomer,
