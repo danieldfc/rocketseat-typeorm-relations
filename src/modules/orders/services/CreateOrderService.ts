@@ -68,8 +68,6 @@ class CreateOrderService {
       products: formattedProducts,
     });
 
-    console.log(order)
-
     await this.productsRepository.updateQuantity(products);
 
     return order;
